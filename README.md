@@ -110,6 +110,24 @@ Sistem je implementiran kao mikroservisna aplikacija sa četiri servisa, gde sva
 
 * CRUD operacije nad relevantnim entitetima.
 
+### Personalizacija i praćenje sadržaja
+
+S obzirom na to da sistem podržava autentifikovane korisnike, omogućena je
+personalizacija sadržaja kroz funkcionalnost praćenja entiteta od interesa.
+
+Autentifikovani korisnici mogu:
+
+* da izdvoje i prate odabrane fudbalske lige i takmičenja,
+
+* da prate konkretne utakmice koje ih interesuju,
+
+* da na posebnoj stranici imaju pregled praćenih liga, utakmica i relevantnih
+  događaja.
+
+Ova funkcionalnost omogućava korisnicima brži pristup relevantnim informacijama
+i predstavlja osnovu za buduća proširenja sistema, poput real-time notifikacija
+u okviru diplomskog rada.
+
 ### Dodatne funkcionalnosti 1 (10 poena)
 
 U okviru osnovnog projekta implementirane su:
