@@ -1,10 +1,20 @@
 use axum::{
+    extract::State,
+    http::StatusCode,
     routing::get,
     Json,
     Router,
 };
-use serde::Serialize;
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
+use std::{env, sync::Arc};
 use tower_http::cors::CorsLayer;
+
+#[derive(Clone)]
+struct AppState {
+    client: Client,
+    api_key: String,
+}
 
 #[derive(Serialize)]
 struct Competition {
@@ -14,65 +24,102 @@ struct Competition {
     image_url: String,
 }
 
-async fn get_competitions() -> Json<Vec<Competition>> {
-    let competitions = vec![
-        Competition {
-            id: 1,
-            name: "Premier League".to_string(),
-            code: "PL".to_string(),
-            image_url: "https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg".to_string(),
-        },
-        Competition {
-            id: 2,
-            name: "La Liga".to_string(),
-            code: "PD".to_string(),
-            image_url: "https://upload.wikimedia.org/wikipedia/commons/1/13/LaLiga.svg".to_string(),
-        },
-        Competition {
-            id: 3,
-            name: "Serie A".to_string(),
-            code: "SA".to_string(),
-            image_url: "https://upload.wikimedia.org/wikipedia/en/e/e1/Serie_A_logo_%282019%29.svg".to_string(),
-        },
-        Competition {
-            id: 4,
-            name: "Bundesliga".to_string(),
-            code: "BL1".to_string(),
-            image_url: "https://upload.wikimedia.org/wikipedia/en/d/df/Bundesliga_logo_%282017%29.svg".to_string(),
-        },
-        Competition {
-            id: 1,
-            name: "Premier League".to_string(),
-            code: "PL".to_string(),
-            image_url: "https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg".to_string(),
-        },
-        Competition {
-            id: 2,
-            name: "La Liga".to_string(),
-            code: "PD".to_string(),
-            image_url: "https://upload.wikimedia.org/wikipedia/commons/1/13/LaLiga.svg".to_string(),
-        },
-        Competition {
-            id: 3,
-            name: "Serie A".to_string(),
-            code: "SA".to_string(),
-            image_url: "https://upload.wikimedia.org/wikipedia/en/e/e1/Serie_A_logo_%282019%29.svg".to_string(),
-        },
-        Competition {
-            id: 4,
-            name: "Bundesliga".to_string(),
-            code: "BL1".to_string(),
-            image_url: "https://upload.wikimedia.org/wikipedia/en/d/df/Bundesliga_logo_%282017%29.svg".to_string(),
-        },
-    ];
+#[derive(Deserialize)]
+struct FootballDataCompetitionsResponse {
+    competitions: Vec<FootballDataCompetition>,
+}
 
-    Json(competitions)
+#[derive(Deserialize)]
+struct FootballDataCompetition {
+    id: u32,
+    name: String,
+    code: String,
+    emblem: Option<String>,
+}
+
+async fn get_competitions(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<Competition>>, (StatusCode, String)> {
+    let url = "https://api.football-data.org/v4/competitions";
+
+    let response = state
+        .client
+        .get(url)
+        .header("X-Auth-Token", &state.api_key)
+        .send()
+        .await
+        .map_err(internal_error)?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let body = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Failed to read error body".to_string());
+
+        return Err((
+            StatusCode::BAD_GATEWAY,
+            format!("Football Data API error: {} - {}", status, body),
+        ));
+    }
+
+    let api_response: FootballDataCompetitionsResponse = response
+        .json()
+        .await
+        .map_err(internal_error)?;
+
+    let allowed_codes = [
+    "PL",   // Premier League
+    "PD",   // La Liga
+    "SA",   // Serie A
+    "BL1",  // Bundesliga
+    "FL1",  // Ligue 1
+    "DED",  // Eredivisie
+    "PPL",  // Primeira Liga
+    "ELC",  // Championship
+    "CL",   // UEFA Champions League
+    "BSA",  // Campeonato Brasileiro Série A
+    "WC",   // FIFA World Cup
+    "EC",   // European Championship
+];
+
+    let competitions = api_response
+        .competitions
+        .into_iter()
+        .filter(|competition| allowed_codes.contains(&competition.code.as_str()))
+        .map(|competition| Competition {
+            id: competition.id,
+            name: competition.name,
+            code: competition.code,
+            image_url: competition.emblem.unwrap_or_default(),
+        })
+        .collect();
+
+    Ok(Json(competitions))
+}
+
+fn internal_error<E: std::fmt::Display>(error: E) -> (StatusCode, String) {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        format!("Internal server error: {}", error),
+    )
 }
 
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().ok();
+
+    let api_key = env::var("FOOTBALL_DATA_API_KEY")
+        .expect("FOOTBALL_DATA_API_KEY must be set in .env file");
+
+    let state = Arc::new(AppState {
+        client: Client::new(),
+        api_key,
+    });
+
     let app = Router::new()
         .route("/competitions", get(get_competitions))
+        .with_state(state)
         .layer(CorsLayer::permissive());
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
