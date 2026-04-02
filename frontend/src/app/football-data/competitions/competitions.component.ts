@@ -3,11 +3,12 @@ import { Competition } from '../../model/competition';
 import { FootballDataService } from '../../services/football-data.service';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-competitions',
   standalone: true,
-  imports: [CommonModule, MatCardModule],
+  imports: [CommonModule, MatCardModule, RouterLink],
   templateUrl: './competitions.component.html',
   styleUrl: './competitions.component.css'
 })

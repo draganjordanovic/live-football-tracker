@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Competition } from '../model/competition';
+import { CompetitionStandingsResponse } from '../model/competition-standings';
 
 @Injectable({
   providedIn: 'root'
@@ -14,4 +15,9 @@ export class FootballDataService {
   getCompetitions(): Observable<Competition[]> {
     return this.http.get<Competition[]>(`${this.baseUrl}/competitions`);
   }
+  getCompetitionStandings(code: string) {
+  return this.http.get<CompetitionStandingsResponse>(
+    `${this.baseUrl}/competitions/${code}/standings`
+  );
+}
 }

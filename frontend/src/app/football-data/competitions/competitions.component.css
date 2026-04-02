@@ -5,10 +5,16 @@
 }
 
 .competition-card {
-    color: white;
-    background-color: blueviolet;
+  /* color: white;
+  background-color: blueviolet; */
   overflow: hidden;
   border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.competition-card:hover {
+  transform: translateY(-4px);
 }
 
 .competition-image {

@@ -1,0 +1,46 @@
+.league-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.league-header img{
+    width: 14rem;
+    height: 14rem;
+}
+ .lgd{
+    color: blueviolet;
+ }
+
+.league-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.standing-switcher {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.full-width-table {
+  width: 100%;
+}
+
+.team-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.team-crest {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
