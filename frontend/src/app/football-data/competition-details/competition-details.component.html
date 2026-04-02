@@ -1,5 +1,5 @@
 @if (loading) {
-  <p>Loading standings...</p>
+  <p>Loading competition details...</p>
 }
 
 @if (error) {
@@ -10,21 +10,22 @@
   <div class="league-header">
     <img [src]="data.competition.image_url" [alt]="data.competition.name" class="league-logo" />
     <div class="lgd">
-      <h2>{{ data.competition.name }}</h2>
-      <!-- <p>Code: {{ data.competition.code }}</p> -->
-      <p>Current matchday: {{ data.season.current_matchday ?? 'N/A' }}</p>
+      <!-- <h2>{{ data.competition.name }}</h2> -->
+      <!-- <p>Current matchday: {{ data.season.current_matchday ?? 'N/A' }}</p> -->
     </div>
   </div>
 
   @if (standingTypes.length > 1) {
-  <div class="standing-switcher">
-    @for (type of standingTypes; track type) {
-      <button mat-button (click)="selectStanding(type)">
-        {{ type }}
-      </button>
-    }
-  </div>
-}
+    <div class="standing-switcher">
+      @for (type of standingTypes; track type) {
+        <button
+          mat-button
+          (click)="selectStanding(type)">
+          {{ type }}
+        </button>
+      }
+    </div>
+  }
 
   @if (selectedStanding) {
     <div class="table-wrapper">
@@ -95,4 +96,44 @@
       </table>
     </div>
   }
+
+  <section class="matches-section">
+    <h3>Matches - current matchday</h3>
+
+    @if (currentMatchday === null) {
+      <p>Current matchday is not available.</p>
+    } @else if (currentMatchdayMatches.length === 0) {
+      <p>No matches found for current matchday.</p>
+    } @else {
+      <div class="matches-list">
+        @for (match of currentMatchdayMatches; track match.id) {
+          <mat-card class="match-card">
+            <mat-card-content>
+              <div class="match-top-row">
+                <span class="matchday-badge">Matchday {{ match.matchday }}</span>
+                <span class="match-status">{{ match.status }}</span>
+              </div>
+
+              <div class="match-main-row">
+                <div class="team-side">
+                  <img [src]="match.home_team.crest" [alt]="match.home_team.name" class="team-crest large" />
+                  <span>{{ match.home_team.short_name }}</span>
+                </div>
+
+                <div class="score-block">
+                  <div class="score">{{ getScore(match) }}</div>
+                  <div class="match-date">{{ match.utc_date | date:'dd.MM.yyyy HH:mm' }}</div>
+                </div>
+
+                <div class="team-side">
+                  <img [src]="match.away_team.crest" [alt]="match.away_team.name" class="team-crest large" />
+                  <span>{{ match.away_team.short_name }}</span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    }
+  </section>
 }

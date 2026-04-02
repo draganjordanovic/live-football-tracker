@@ -1,5 +1,5 @@
 use axum::{
-    extract::State,
+    extract::{Query, State},
     http::StatusCode,
     routing::get,
     Json,
@@ -137,6 +137,166 @@ struct FootballDataTableTeam {
     short_name: String,
     tla: Option<String>,
     crest: String,
+}
+
+#[derive(Serialize)]
+struct CompetitionMatchesResponse {
+    competition: CompetitionInfo,
+    matches: Vec<MatchItem>,
+}
+
+#[derive(Serialize)]
+struct MatchItem {
+    id: u32,
+    utc_date: String,
+    status: String,
+    matchday: Option<u32>,
+    stage: Option<String>,
+    home_team: MatchTeam,
+    away_team: MatchTeam,
+    score: MatchScore,
+}
+
+#[derive(Serialize)]
+struct MatchTeam {
+    id: u32,
+    name: String,
+    short_name: String,
+    tla: Option<String>,
+    crest: String,
+}
+
+#[derive(Serialize)]
+struct MatchScore {
+    home: Option<i32>,
+    away: Option<i32>,
+}
+
+#[derive(Deserialize)]
+struct FootballDataMatchesResponse {
+    competition: FootballDataStandingCompetition,
+    matches: Vec<FootballDataMatch>,
+}
+
+#[derive(Deserialize)]
+struct FootballDataMatch {
+    id: u32,
+    #[serde(rename = "utcDate")]
+    utc_date: String,
+    status: String,
+    matchday: Option<u32>,
+    stage: Option<String>,
+    #[serde(rename = "homeTeam")]
+    home_team: FootballDataMatchTeam,
+    #[serde(rename = "awayTeam")]
+    away_team: FootballDataMatchTeam,
+    score: FootballDataMatchScore,
+}
+
+#[derive(Deserialize)]
+struct FootballDataMatchTeam {
+    id: u32,
+    name: String,
+    #[serde(rename = "shortName")]
+    short_name: String,
+    tla: Option<String>,
+    crest: String,
+}
+
+#[derive(Deserialize)]
+struct FootballDataMatchScore {
+    #[serde(rename = "fullTime")]
+    full_time: FootballDataFullTimeScore,
+}
+
+#[derive(Deserialize)]
+struct FootballDataFullTimeScore {
+    home: Option<i32>,
+    away: Option<i32>,
+}
+
+#[derive(Deserialize)]
+struct CompetitionMatchesQuery {
+    matchday: u32,
+}
+
+async fn get_competition_matches(
+    axum::extract::Path(code): axum::extract::Path<String>,
+    Query(query): Query<CompetitionMatchesQuery>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<CompetitionMatchesResponse>, (StatusCode, String)> {
+    let url = format!(
+        "https://api.football-data.org/v4/competitions/{}/matches?matchday={}",
+        code, query.matchday
+    );
+
+    let response = state
+        .client
+        .get(&url)
+        .header("X-Auth-Token", &state.api_key)
+        .send()
+        .await
+        .map_err(internal_error)?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let body = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Failed to read error body".to_string());
+
+        return Err((
+            StatusCode::BAD_GATEWAY,
+            format!("Football Data API error: {} - {}", status, body),
+        ));
+    }
+
+    let api_response: FootballDataMatchesResponse = response
+        .json()
+        .await
+        .map_err(internal_error)?;
+
+    let matches = api_response
+        .matches
+        .into_iter()
+        .map(|m| MatchItem {
+            id: m.id,
+            utc_date: m.utc_date,
+            status: m.status,
+            matchday: m.matchday,
+            stage: m.stage,
+            home_team: MatchTeam {
+                id: m.home_team.id,
+                name: m.home_team.name,
+                short_name: m.home_team.short_name,
+                tla: m.home_team.tla,
+                crest: m.home_team.crest,
+            },
+            away_team: MatchTeam {
+                id: m.away_team.id,
+                name: m.away_team.name,
+                short_name: m.away_team.short_name,
+                tla: m.away_team.tla,
+                crest: m.away_team.crest,
+            },
+            score: MatchScore {
+                home: m.score.full_time.home,
+                away: m.score.full_time.away,
+            },
+        })
+        .collect();
+
+    let result = CompetitionMatchesResponse {
+        competition: CompetitionInfo {
+            id: api_response.competition.id,
+            name: api_response.competition.name,
+            code: api_response.competition.code,
+            image_url: api_response.competition.emblem.unwrap_or_default(),
+        },
+        matches,
+    };
+
+    Ok(Json(result))
 }
 
 async fn get_competition_standings(
@@ -299,6 +459,7 @@ async fn main() {
     let app = Router::new()
         .route("/competitions", get(get_competitions))
         .route("/competitions/:code/standings", get(get_competition_standings))
+        .route("/competitions/:code/matches", get(get_competition_matches))
         .with_state(state)
         .layer(CorsLayer::permissive());
 

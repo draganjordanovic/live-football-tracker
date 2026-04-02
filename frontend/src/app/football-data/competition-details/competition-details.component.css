@@ -44,3 +44,74 @@
   height: 24px;
   object-fit: contain;
 }
+.matches-section {
+  margin-top: 32px;
+}
+
+.matches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.match-card {
+  border-radius: 12px;
+}
+
+.match-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.matchday-badge {
+  font-weight: 600;
+}
+
+.match-status {
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+.match-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.team-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 30%;
+}
+
+.team-side:last-child {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.team-crest.large {
+  width: 36px;
+  height: 36px;
+}
+
+.score-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40%;
+}
+
+.score {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.match-date {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  opacity: 0.75;
+}

@@ -2,22 +2,26 @@ import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FootballDataService } from '../../services/football-data.service';
 import { CompetitionStandingsResponse, StandingGroup } from '../../model/competition-standings';
-import { CommonModule } from '@angular/common';
+import { CompetitionMatchesResponse, MatchItem } from '../../model/competition-matches';
+import { CommonModule, DatePipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-competition-details',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatButtonModule],
+  imports: [CommonModule, DatePipe, MatTableModule, MatButtonModule, MatCardModule],
   templateUrl: './competition-details.component.html',
   styleUrl: './competition-details.component.css'
 })
 export class CompetitionDetailsComponent {
-private route = inject(ActivatedRoute);
+  private route = inject(ActivatedRoute);
   private footballDataService = inject(FootballDataService);
 
   data: CompetitionStandingsResponse | null = null;
+  matchesData: CompetitionMatchesResponse | null = null;
+
   selectedStandingType = 'TOTAL';
   loading = false;
   error = '';
@@ -28,18 +32,36 @@ private route = inject(ActivatedRoute);
     const code = this.route.snapshot.paramMap.get('code');
 
     if (code) {
-      this.loadStandings(code);
+      this.loadCompetitionPage(code);
     }
   }
 
-  loadStandings(code: string): void {
+  loadCompetitionPage(code: string): void {
     this.loading = true;
     this.error = '';
 
     this.footballDataService.getCompetitionStandings(code).subscribe({
-      next: (data) => {
-        this.data = data;
-        this.loading = false;
+      next: (standingsData) => {
+        this.data = standingsData;
+
+        const currentMatchday = standingsData.season.current_matchday;
+
+        if (currentMatchday === null) {
+          this.matchesData = { competition: standingsData.competition, matches: [] };
+          this.loading = false;
+          return;
+        }
+
+        this.footballDataService.getCompetitionMatches(code, currentMatchday).subscribe({
+          next: (matchesData) => {
+            this.matchesData = matchesData;
+            this.loading = false;
+          },
+          error: () => {
+            this.error = 'Failed to load current matchday matches.';
+            this.loading = false;
+          }
+        });
       },
       error: () => {
         this.error = 'Failed to load standings.';
@@ -56,7 +78,23 @@ private route = inject(ActivatedRoute);
     return this.data?.standings.find(s => s.standing_type === this.selectedStandingType);
   }
 
+  get currentMatchday(): number | null {
+    return this.data?.season.current_matchday ?? null;
+  }
+
+  get currentMatchdayMatches(): MatchItem[] {
+    return this.matchesData?.matches ?? [];
+  }
+
   selectStanding(type: string): void {
     this.selectedStandingType = type;
+  }
+
+  getScore(match: MatchItem): string {
+    if (match.score.home === null || match.score.away === null) {
+      return '- : -';
+    }
+
+    return `${match.score.home} : ${match.score.away}`;
   }
 }
