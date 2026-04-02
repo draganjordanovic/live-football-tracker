@@ -1,0 +1,121 @@
+.match-details-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+}
+
+.hero-card,
+.info-card {
+  border-radius: 16px;
+}
+
+.competition-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.competition-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.teams-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.team-block {
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.team-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  margin-bottom: 12px;
+}
+
+.center-score {
+  width: 40%;
+  text-align: center;
+}
+
+.status {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.score {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.datetime,
+.venue {
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.referee-item {
+  padding: 12px 0;
+}
+
+.events-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.event-row {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.minute {
+  min-width: 52px;
+  font-weight: 600;
+}
+
+.event-meta {
+  opacity: 0.8;
+  font-size: 0.95rem;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .teams-score-row,
+  .details-grid,
+  .events-grid {
+    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .team-block,
+  .center-score {
+    width: 100%;
+  }
+}

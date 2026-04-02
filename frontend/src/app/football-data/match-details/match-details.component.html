@@ -1,0 +1,136 @@
+@if (loading) {
+  <p>Loading match details...</p>
+}
+
+@if (error) {
+  <p>{{ error }}</p>
+}
+
+@if (data && !loading && !error) {
+  <div class="match-details-page">
+
+    <mat-card class="hero-card">
+      <mat-card-content>
+        <div class="competition-row">
+          <img [src]="data.competition.emblem" [alt]="data.competition.name" class="competition-logo" />
+          <div>
+            <h2>{{ data.competition.name }}</h2>
+            <p>
+              Matchday: {{ data.matchday ?? 'N/A' }} ·
+              Stage: {{ data.stage ?? 'N/A' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="teams-score-row">
+          <div class="team-block">
+            <img [src]="data.home_team.crest" [alt]="data.home_team.name" class="team-logo" />
+            <h3>{{ data.home_team.name }}</h3>
+          </div>
+
+          <div class="center-score">
+            <div class="status">{{ formatStatus(data.status) }}</div>
+            <div class="score">{{ fullTimeScore }}</div>
+            <div class="datetime">{{ data.utc_date | date:'dd.MM.yyyy HH:mm' }}</div>
+            <div class="venue">{{ data.venue || 'Venue not available' }}</div>
+          </div>
+
+          <div class="team-block">
+            <img [src]="data.away_team.crest" [alt]="data.away_team.name" class="team-logo" />
+            <h3>{{ data.away_team.name }}</h3>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="details-grid">
+      <mat-card class="info-card">
+        <mat-card-content>
+          <h3>Match info</h3>
+          <p><strong>Status:</strong> {{ formatStatus(data.status) }}</p>
+          <p><strong>Date and time:</strong> {{ data.utc_date | date:'dd.MM.yyyy HH:mm' }}</p>
+          <p><strong>Venue:</strong> {{ data.venue || 'Not available' }}</p>
+          <p><strong>Half-time score:</strong> {{ halfTimeScore }}</p>
+          <p><strong>Full-time score:</strong> {{ fullTimeScore }}</p>
+          <p><strong>Winner:</strong> {{ data.score.winner || 'Not decided' }}</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="info-card">
+        <mat-card-content>
+          <h3>Referees</h3>
+
+          @if (data.referees.length === 0) {
+            <p>No referee information available.</p>
+          } @else {
+            @for (referee of data.referees; track referee.id) {
+              <div class="referee-item">
+                <p><strong>{{ referee.name }}</strong></p>
+                <p>{{ referee.type || 'Referee' }}{{ referee.nationality ? ' · ' + referee.nationality : '' }}</p>
+              </div>
+              <mat-divider></mat-divider>
+            }
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <mat-card class="info-card">
+      <mat-card-content>
+        <h3>Available match events / statistics</h3>
+
+        @if (!isFinishedOrLive()) {
+          <p>This match has not started yet, so event/statistics data is not available.</p>
+        } @else if (!hasEventData) {
+          <p>Detailed event/statistics data is currently not available from the active data source for this match.</p>
+        } @else {
+          <div class="events-grid">
+            <div>
+              <h4>Goals</h4>
+              @if (data.goals.length === 0) {
+                <p>No goals recorded.</p>
+              } @else {
+                @for (goal of data.goals; track $index) {
+                  <div class="event-row">
+                    <div class="minute">{{ formatMinute(goal) }}</div>
+                    <div>
+                      <div><strong>{{ goal.scorer || 'Unknown scorer' }}</strong></div>
+                      <div>{{ goal.team_name || 'Unknown team' }}</div>
+                      <div class="event-meta">
+                        @if (goal.assist) {
+                          <span>Assist: {{ goal.assist }}</span>
+                        }
+                        @if (goal.score_home !== null && goal.score_away !== null) {
+                          <span> · Score: {{ goal.score_home }} : {{ goal.score_away }}</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+
+            <div>
+              <h4>Cards</h4>
+              @if (data.bookings.length === 0) {
+                <p>No cards recorded.</p>
+              } @else {
+                @for (booking of data.bookings; track $index) {
+                  <div class="event-row">
+                    <div class="minute">{{ formatMinute(booking) }}</div>
+                    <div>
+                      <div><strong>{{ booking.player || 'Unknown player' }}</strong></div>
+                      <div>{{ booking.team_name || 'Unknown team' }}</div>
+                      <div class="event-meta">{{ booking.card || 'Card' }}</div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+}

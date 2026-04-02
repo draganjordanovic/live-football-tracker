@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FootballDataService } from '../../services/football-data.service';
 import { CompetitionStandingsResponse, StandingGroup } from '../../model/competition-standings';
 import { CompetitionMatchesResponse, MatchItem } from '../../model/competition-matches';
@@ -17,6 +17,7 @@ import { MatCardModule } from '@angular/material/card';
 })
 export class CompetitionDetailsComponent {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private footballDataService = inject(FootballDataService);
 
   data: CompetitionStandingsResponse | null = null;
@@ -97,4 +98,8 @@ export class CompetitionDetailsComponent {
 
     return `${match.score.home} : ${match.score.away}`;
   }
+
+  openMatchDetails(matchId: number): void {
+  this.router.navigate(['/matches', matchId]);
+}
 }

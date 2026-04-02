@@ -107,7 +107,7 @@
     } @else {
       <div class="matches-list">
         @for (match of currentMatchdayMatches; track match.id) {
-          <mat-card class="match-card">
+          <mat-card class="match-card clickable" (click)="openMatchDetails(match.id)">
             <mat-card-content>
               <div class="match-top-row">
                 <span class="matchday-badge">Matchday {{ match.matchday }}</span>

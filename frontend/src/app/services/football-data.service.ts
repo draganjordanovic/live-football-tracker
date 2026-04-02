@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { Competition } from '../model/competition';
 import { CompetitionStandingsResponse } from '../model/competition-standings';
 import { CompetitionMatchesResponse } from '../model/competition-matches';
+import { MatchDetailsResponse } from '../model/match-details';
 
 @Injectable({
   providedIn: 'root'
@@ -27,4 +28,7 @@ export class FootballDataService {
       `${this.baseUrl}/competitions/${code}/matches?matchday=${matchday}`
     );
   }
+  getMatchDetails(id: number): Observable<MatchDetailsResponse> {
+  return this.http.get<MatchDetailsResponse>(`${this.baseUrl}/matches/${id}`);
+}
 }
