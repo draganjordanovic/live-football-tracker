@@ -9,6 +9,7 @@ use axum::{
 use crate::{
     app_state::AppState,
     cache,
+    cache_keys::{COMPETITIONS_TTL, STANDINGS_TTL},
     errors::internal_error,
     models::{
         common::CompetitionInfo,
@@ -23,8 +24,6 @@ use crate::{
     },
 };
 
-const COMPETITIONS_TTL: u64 = 60 * 60;
-const STANDINGS_TTL: u64 = 60 * 5;
 
 /// GET /competitions
 pub async fn get_competitions(

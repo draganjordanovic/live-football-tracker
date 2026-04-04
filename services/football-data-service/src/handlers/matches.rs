@@ -9,6 +9,12 @@ use axum::{
 use crate::{
     app_state::AppState,
     cache,
+    cache_keys::{
+    MATCH_DETAILS_FINISHED_TTL,
+    MATCH_DETAILS_LIVE_TTL,
+    MATCH_DETAILS_SCHEDULED_TTL,
+    MATCHES_TTL,
+},
     errors::internal_error,
     models::{
         common::{CompetitionInfo, MatchTeam},
@@ -32,10 +38,6 @@ use crate::{
     },
 };
 
-const MATCHES_TTL: u64 = 60;
-const MATCH_DETAILS_SCHEDULED_TTL: u64 = 60 * 2;
-const MATCH_DETAILS_LIVE_TTL: u64 = 15;
-const MATCH_DETAILS_FINISHED_TTL: u64 = 60 * 10;
 
 /// GET /competitions/:code/matches?matchday=...
 pub async fn get_competition_matches(
