@@ -1,9 +1,14 @@
 use std::sync::Arc;
 
-use axum::{extract::{Path, State}, http::StatusCode, Json};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    Json,
+};
 
 use crate::{
     app_state::AppState,
+    cache,
     errors::internal_error,
     models::{
         common::CompetitionInfo,
@@ -18,10 +23,24 @@ use crate::{
     },
 };
 
+const COMPETITIONS_TTL: u64 = 60 * 60;
+const STANDINGS_TTL: u64 = 60 * 5;
+
 /// GET /competitions
 pub async fn get_competitions(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<Competition>>, (StatusCode, String)> {
+    let cache_key = "competitions:all";
+
+    if let Ok(Some(cached)) =
+        cache::get_json::<Vec<Competition>>(&state.redis_client, cache_key).await
+    {
+        println!("Cache HIT: {}", cache_key);
+        return Ok(Json(cached));
+    }
+
+    println!("Cache MISS: {}", cache_key);
+
     let url = "https://api.football-data.org/v4/competitions";
 
     let response = state
@@ -49,18 +68,7 @@ pub async fn get_competitions(
         response.json().await.map_err(internal_error)?;
 
     let allowed_codes = [
-        "PL",   // Premier League
-        "PD",   // La Liga
-        "SA",   // Serie A
-        "BL1",  // Bundesliga
-        "FL1",  // Ligue 1
-        "DED",  // Eredivisie
-        "PPL",  // Primeira Liga
-        "ELC",  // Championship
-        "CL",   // UEFA Champions League
-        "BSA",  // Campeonato Brasileiro Série A
-        "WC",   // FIFA World Cup
-        "EC",   // European Championship
+        "PL", "PD", "SA", "BL1", "FL1", "DED", "PPL", "ELC", "CL", "BSA", "WC", "EC",
     ];
 
     let competitions = api_response
@@ -73,7 +81,15 @@ pub async fn get_competitions(
             code: competition.code,
             image_url: competition.emblem.unwrap_or_default(),
         })
-        .collect();
+        .collect::<Vec<_>>();
+
+    let _ = cache::set_json(
+        &state.redis_client,
+        cache_key,
+        COMPETITIONS_TTL,
+        &competitions,
+    )
+    .await;
 
     Ok(Json(competitions))
 }
@@ -83,6 +99,17 @@ pub async fn get_competition_standings(
     Path(code): Path<String>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<CompetitionStandingResponse>, (StatusCode, String)> {
+    let cache_key = format!("competition:{}:standings", code);
+
+    if let Ok(Some(cached)) =
+        cache::get_json::<CompetitionStandingResponse>(&state.redis_client, &cache_key).await
+    {
+        println!("Cache HIT: {}", cache_key);
+        return Ok(Json(cached));
+    }
+
+    println!("Cache MISS: {}", cache_key);
+
     let url = format!("https://api.football-data.org/v4/competitions/{}/standings", code);
 
     let response = state
@@ -150,6 +177,8 @@ pub async fn get_competition_standings(
         },
         standings,
     };
+
+    let _ = cache::set_json(&state.redis_client, &cache_key, STANDINGS_TTL, &result).await;
 
     Ok(Json(result))
 }

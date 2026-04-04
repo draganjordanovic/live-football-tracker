@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::common::{FootballDataFullTimeScore, FootballDataMatchTeam, FootballDataStandingCompetition, MatchTeam};
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct MatchDetailsResponse {
     pub id: u32,
     pub utc_date: String,
@@ -19,7 +19,7 @@ pub struct MatchDetailsResponse {
     pub bookings: Vec<BookingItem>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct MatchCompetitionInfo {
     pub id: u32,
     pub name: String,
@@ -27,20 +27,20 @@ pub struct MatchCompetitionInfo {
     pub emblem: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct DetailedMatchScore {
     pub winner: Option<String>,
     pub full_time: ScorePair,
     pub half_time: ScorePair,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ScorePair {
     pub home: Option<i32>,
     pub away: Option<i32>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct RefereeItem {
     pub id: u32,
     pub name: String,
@@ -48,7 +48,7 @@ pub struct RefereeItem {
     pub nationality: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct GoalItem {
     pub minute: Option<u32>,
     pub injury_time: Option<u32>,
@@ -60,7 +60,7 @@ pub struct GoalItem {
     pub score_away: Option<i32>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct BookingItem {
     pub minute: Option<u32>,
     pub team_id: Option<u32>,

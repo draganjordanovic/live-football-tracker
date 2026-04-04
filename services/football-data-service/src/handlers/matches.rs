@@ -8,6 +8,7 @@ use axum::{
 
 use crate::{
     app_state::AppState,
+    cache,
     errors::internal_error,
     models::{
         common::{CompetitionInfo, MatchTeam},
@@ -31,12 +32,28 @@ use crate::{
     },
 };
 
+const MATCHES_TTL: u64 = 60;
+const MATCH_DETAILS_SCHEDULED_TTL: u64 = 60 * 2;
+const MATCH_DETAILS_LIVE_TTL: u64 = 15;
+const MATCH_DETAILS_FINISHED_TTL: u64 = 60 * 10;
+
 /// GET /competitions/:code/matches?matchday=...
 pub async fn get_competition_matches(
     Path(code): Path<String>,
     Query(query): Query<CompetitionMatchesQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<CompetitionMatchesResponse>, (StatusCode, String)> {
+    let cache_key = format!("competition:{}:matches:{}", code, query.matchday);
+
+    if let Ok(Some(cached)) =
+        cache::get_json::<CompetitionMatchesResponse>(&state.redis_client, &cache_key).await
+    {
+        println!("Cache HIT: {}", cache_key);
+        return Ok(Json(cached));
+    }
+
+    println!("Cache MISS: {}", cache_key);
+
     let url = format!(
         "https://api.football-data.org/v4/competitions/{}/matches?matchday={}",
         code, query.matchday
@@ -106,6 +123,8 @@ pub async fn get_competition_matches(
         matches,
     };
 
+    let _ = cache::set_json(&state.redis_client, &cache_key, MATCHES_TTL, &result).await;
+
     Ok(Json(result))
 }
 
@@ -114,6 +133,17 @@ pub async fn get_match_details(
     Path(id): Path<u32>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<MatchDetailsResponse>, (StatusCode, String)> {
+    let cache_key = format!("match:{}:details", id);
+
+    if let Ok(Some(cached)) =
+        cache::get_json::<MatchDetailsResponse>(&state.redis_client, &cache_key).await
+    {
+        println!("Cache HIT: {}", cache_key);
+        return Ok(Json(cached));
+    }
+
+    println!("Cache MISS: {}", cache_key);
+
     let url = format!("https://api.football-data.org/v4/matches/{}", id);
 
     let response = state
@@ -143,7 +173,7 @@ pub async fn get_match_details(
     let result = MatchDetailsResponse {
         id: api_response.id,
         utc_date: api_response.utc_date,
-        status: api_response.status,
+        status: api_response.status.clone(),
         venue: api_response.venue,
         matchday: api_response.matchday,
         stage: api_response.stage,
@@ -223,6 +253,14 @@ pub async fn get_match_details(
             })
             .collect(),
     };
+
+    let ttl = match result.status.as_str() {
+        "IN_PLAY" | "PAUSED" => MATCH_DETAILS_LIVE_TTL,
+        "FINISHED" => MATCH_DETAILS_FINISHED_TTL,
+        _ => MATCH_DETAILS_SCHEDULED_TTL,
+    };
+
+    let _ = cache::set_json(&state.redis_client, &cache_key, ttl, &result).await;
 
     Ok(Json(result))
 }

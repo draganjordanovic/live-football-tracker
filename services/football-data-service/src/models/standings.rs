@@ -2,25 +2,25 @@ use serde::{Deserialize, Serialize};
 
 use super::common::FootballDataStandingCompetition;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct CompetitionStandingResponse {
     pub competition: super::common::CompetitionInfo,
     pub season: SeasonInfo,
     pub standings: Vec<StandingGroup>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct SeasonInfo {
     pub current_matchday: Option<u32>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct StandingGroup {
     pub standing_type: String,
     pub table: Vec<TableRow>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct TableRow {
     pub position: u32,
     pub team_id: u32,

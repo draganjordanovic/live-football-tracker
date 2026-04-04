@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct CompetitionInfo {
     pub id: u32,
     pub name: String,
@@ -8,7 +8,7 @@ pub struct CompetitionInfo {
     pub image_url: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct MatchTeam {
     pub id: u32,
     pub name: String,

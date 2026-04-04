@@ -2,13 +2,13 @@ use serde::{Deserialize, Serialize};
 
 use super::common::{CompetitionInfo, FootballDataFullTimeScore, FootballDataMatchTeam, FootballDataStandingCompetition, MatchTeam};
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct CompetitionMatchesResponse {
     pub competition: CompetitionInfo,
     pub matches: Vec<MatchItem>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct MatchItem {
     pub id: u32,
     pub utc_date: String,
@@ -20,7 +20,7 @@ pub struct MatchItem {
     pub score: MatchScore,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct MatchScore {
     pub home: Option<i32>,
     pub away: Option<i32>,

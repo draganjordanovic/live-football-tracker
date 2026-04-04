@@ -75,6 +75,7 @@ export class MatchDetailsComponent {
   }
 
   get hasEventData(): boolean {
+    console.log(this.data)
     return !!this.data && (this.data.goals.length > 0 || this.data.bookings.length > 0);
   }
 

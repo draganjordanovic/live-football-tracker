@@ -3,9 +3,11 @@ mod errors;
 mod handlers;
 mod models;
 mod routes;
+mod cache;
 
 use app_state::AppState;
 use reqwest::Client;
+use redis::Client as RedisClient;
 use std::{env, sync::Arc};
 use routes::create_router;
 
@@ -16,9 +18,16 @@ async fn main() {
     let api_key = env::var("FOOTBALL_DATA_API_KEY")
         .expect("FOOTBALL_DATA_API_KEY must be set in .env file");
 
+    let redis_url =
+        env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379/".to_string());
+
+    let redis_client =
+        RedisClient::open(redis_url).expect("Failed to create Redis client");
+
     let state = Arc::new(AppState {
         client: Client::new(),
         api_key,
+        redis_client,
     });
 
     let app = create_router(state);
