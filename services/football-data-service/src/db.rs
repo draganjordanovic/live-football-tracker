@@ -5,6 +5,7 @@ use crate::models::{
     common::MatchTeam,
     competitions::Competition,
     match_details::MatchDetailsResponse,
+    standings::CompetitionStandingResponse,
 };
 
 pub async fn upsert_competition(
@@ -340,4 +341,170 @@ pub async fn upsert_match_summary(
     .await?;
 
     Ok(row.get::<i64, _>("id"))
+}
+
+pub async fn create_standings_snapshot(
+    db: &PgPool,
+    competition_id: i64,
+    current_matchday: Option<u32>,
+) -> Result<i64, sqlx::Error> {
+    let row = sqlx::query(
+        r#"
+        INSERT INTO competition_standings_snapshots (
+            competition_id,
+            current_matchday,
+            created_at
+        )
+        VALUES ($1, $2, NOW())
+        RETURNING id
+        "#,
+    )
+    .bind(competition_id)
+    .bind(current_matchday.map(|v| i32::try_from(v).unwrap()))
+    .fetch_one(db)
+    .await?;
+
+    Ok(row.get::<i64, _>("id"))
+}
+
+pub async fn delete_existing_standings_snapshot_for_matchday(
+    db: &PgPool,
+    competition_id: i64,
+    current_matchday: Option<u32>,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"
+        DELETE FROM competition_standings_snapshots
+        WHERE competition_id = $1
+          AND (
+            (current_matchday IS NULL AND $2 IS NULL)
+            OR current_matchday = $2
+          )
+        "#,
+    )
+    .bind(competition_id)
+    .bind(current_matchday.map(|v| i32::try_from(v).unwrap()))
+    .execute(db)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn insert_standing_row(
+    db: &PgPool,
+    snapshot_id: i64,
+    team_id: i64,
+    standing_type: &str,
+    position: u32,
+    played_games: u32,
+    form: &Option<String>,
+    won: u32,
+    draw: u32,
+    lost: u32,
+    points: u32,
+    goals_for: i32,
+    goals_against: i32,
+    goal_difference: i32,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"
+        INSERT INTO competition_standing_rows (
+            snapshot_id,
+            team_id,
+            standing_type,
+            position,
+            played_games,
+            form,
+            won,
+            draw,
+            lost,
+            points,
+            goals_for,
+            goals_against,
+            goal_difference
+        )
+        VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+        )
+        "#,
+    )
+    .bind(snapshot_id)
+    .bind(team_id)
+    .bind(standing_type)
+    .bind(i32::try_from(position).unwrap())
+    .bind(i32::try_from(played_games).unwrap())
+    .bind(form)
+    .bind(i32::try_from(won).unwrap())
+    .bind(i32::try_from(draw).unwrap())
+    .bind(i32::try_from(lost).unwrap())
+    .bind(i32::try_from(points).unwrap())
+    .bind(goals_for)
+    .bind(goals_against)
+    .bind(goal_difference)
+    .execute(db)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn save_competition_standings_snapshot(
+    db: &PgPool,
+    standings: &CompetitionStandingResponse,
+) -> Result<(), sqlx::Error> {
+    let competition_id = upsert_competition(
+        db,
+        standings.competition.id,
+        &standings.competition.name,
+        &standings.competition.code,
+        &standings.competition.image_url,
+    )
+    .await?;
+
+    delete_existing_standings_snapshot_for_matchday(
+        db,
+        competition_id,
+        standings.season.current_matchday,
+    )
+    .await?;
+
+    let snapshot_id = create_standings_snapshot(
+        db,
+        competition_id,
+        standings.season.current_matchday,
+    )
+    .await?;
+
+    for standing_group in &standings.standings {
+        for row in &standing_group.table {
+            let team = MatchTeam {
+                id: row.team_id,
+                name: row.team_name.clone(),
+                short_name: row.team_short_name.clone(),
+                tla: row.team_tla.clone(),
+                crest: row.team_crest.clone(),
+            };
+
+            let team_id = upsert_team(db, &team).await?;
+
+            insert_standing_row(
+                db,
+                snapshot_id,
+                team_id,
+                &standing_group.standing_type,
+                row.position,
+                row.played_games,
+                &row.form,
+                row.won,
+                row.draw,
+                row.lost,
+                row.points,
+                row.goals_for,
+                row.goals_against,
+                row.goal_difference,
+            )
+            .await?;
+        }
+    }
+
+    Ok(())
 }

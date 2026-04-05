@@ -182,6 +182,8 @@ pub async fn get_competition_standings(
         standings,
     };
 
+    let _ = db::save_competition_standings_snapshot(&state.db, &result).await;
+
     let _ = cache::set_json(&state.redis_client, &cache_key, STANDINGS_TTL, &result).await;
 
     Ok(Json(result))

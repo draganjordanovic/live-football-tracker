@@ -49,3 +49,27 @@ CREATE TABLE IF NOT EXISTS match_events (
     score_home INTEGER,
     score_away INTEGER
 );
+
+CREATE TABLE IF NOT EXISTS competition_standings_snapshots (
+    id BIGSERIAL PRIMARY KEY,
+    competition_id BIGINT NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
+    current_matchday INTEGER,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS competition_standing_rows (
+    id BIGSERIAL PRIMARY KEY,
+    snapshot_id BIGINT NOT NULL REFERENCES competition_standings_snapshots(id) ON DELETE CASCADE,
+    team_id BIGINT NOT NULL REFERENCES teams(id),
+    standing_type TEXT NOT NULL,
+    position INTEGER NOT NULL,
+    played_games INTEGER NOT NULL,
+    form TEXT,
+    won INTEGER NOT NULL,
+    draw INTEGER NOT NULL,
+    lost INTEGER NOT NULL,
+    points INTEGER NOT NULL,
+    goals_for INTEGER NOT NULL,
+    goals_against INTEGER NOT NULL,
+    goal_difference INTEGER NOT NULL
+);
