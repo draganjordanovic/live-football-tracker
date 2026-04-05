@@ -1,16 +1,18 @@
 mod app_state;
+mod cache;
+mod cache_keys;
 mod errors;
 mod handlers;
 mod models;
 mod routes;
-mod cache;
-mod cache_keys;
+mod db;
 
 use app_state::AppState;
-use reqwest::Client;
 use redis::Client as RedisClient;
-use std::{env, sync::Arc};
+use reqwest::Client;
 use routes::create_router;
+use sqlx::postgres::PgPoolOptions;
+use std::{env, sync::Arc};
 
 #[tokio::main]
 async fn main() {
@@ -25,10 +27,20 @@ async fn main() {
     let redis_client =
         RedisClient::open(redis_url).expect("Failed to create Redis client");
 
+    let database_url =
+        env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
+
+    let db = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await
+        .expect("Failed to connect to PostgreSQL");
+
     let state = Arc::new(AppState {
         client: Client::new(),
         api_key,
         redis_client,
+        db,
     });
 
     let app = create_router(state);

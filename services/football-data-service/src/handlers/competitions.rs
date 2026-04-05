@@ -9,6 +9,7 @@ use axum::{
 use crate::{
     app_state::AppState,
     cache,
+    db,
     cache_keys::{COMPETITIONS_TTL, STANDINGS_TTL},
     errors::internal_error,
     models::{
@@ -81,6 +82,10 @@ pub async fn get_competitions(
             image_url: competition.emblem.unwrap_or_default(),
         })
         .collect::<Vec<_>>();
+
+    for competition in &competitions {
+        let _ = db::upsert_competition_summary(&state.db, competition).await;
+    }
 
     let _ = cache::set_json(
         &state.redis_client,

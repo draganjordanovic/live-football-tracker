@@ -9,6 +9,7 @@ use axum::{
 use crate::{
     app_state::AppState,
     cache,
+    db,
     cache_keys::{
     MATCH_DETAILS_FINISHED_TTL,
     MATCH_DETAILS_LIVE_TTL,
@@ -124,6 +125,37 @@ pub async fn get_competition_matches(
         },
         matches,
     };
+
+        if let Ok(competition_db_id) = db::upsert_competition(
+        &state.db,
+        result.competition.id,
+        &result.competition.name,
+        &result.competition.code,
+        &result.competition.image_url,
+    )
+    .await
+    {
+        for match_item in &result.matches {
+            if let Ok(home_team_db_id) = db::upsert_team(&state.db, &match_item.home_team).await {
+                if let Ok(away_team_db_id) = db::upsert_team(&state.db, &match_item.away_team).await {
+                    let _ = db::upsert_match_summary(
+                        &state.db,
+                        match_item.id,
+                        competition_db_id,
+                        home_team_db_id,
+                        away_team_db_id,
+                        &match_item.utc_date,
+                        &match_item.status,
+                        match_item.matchday,
+                        &match_item.stage,
+                        match_item.score.home,
+                        match_item.score.away,
+                    )
+                    .await;
+                }
+            }
+        }
+    }
 
     let _ = cache::set_json(&state.redis_client, &cache_key, MATCHES_TTL, &result).await;
 
@@ -261,6 +293,39 @@ pub async fn get_match_details(
         "FINISHED" => MATCH_DETAILS_FINISHED_TTL,
         _ => MATCH_DETAILS_SCHEDULED_TTL,
     };
+
+        if let Ok(competition_db_id) = db::upsert_competition(
+        &state.db,
+        result.competition.id,
+        &result.competition.name,
+        &result.competition.code,
+        &result.competition.emblem,
+    )
+    .await
+    {
+        if let Ok(home_team_db_id) = db::upsert_team(&state.db, &result.home_team).await {
+            if let Ok(away_team_db_id) = db::upsert_team(&state.db, &result.away_team).await {
+                if let Ok(match_db_id) = db::upsert_match(
+                    &state.db,
+                    &result,
+                    competition_db_id,
+                    home_team_db_id,
+                    away_team_db_id,
+                )
+                .await
+                {
+                    let _ = db::replace_match_events(
+                        &state.db,
+                        match_db_id,
+                        home_team_db_id,
+                        away_team_db_id,
+                        &result,
+                    )
+                    .await;
+                }
+            }
+        }
+    }
 
     let _ = cache::set_json(&state.redis_client, &cache_key, ttl, &result).await;
 
