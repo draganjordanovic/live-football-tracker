@@ -1,0 +1,23 @@
+<h1>COMPETITIONS</h1>
+
+@if (loading) {
+<p>Loading...</p>
+}
+
+@if (error) {
+<p>{{ error }}</p>
+}
+
+@if (!loading && !error) {
+<div class="competitions-grid">
+  @for (competition of competitions; track competition.id) {
+  <mat-card class="competition-card" [routerLink]="['/competitions', competition.code]">
+    <img mat-card-image [src]="competition.image_url" [alt]="competition.name" class="competition-image" />
+
+    <mat-card-content>
+      <p class="competition-name">{{ competition.name }}</p>
+    </mat-card-content>
+  </mat-card>
+  }
+</div>
+}

@@ -1,0 +1,40 @@
+.competitions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.competition-card {
+  /* color: white;
+  background-color: blueviolet; */
+  overflow: hidden;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.competition-card:hover {
+  transform: translateY(-4px);
+}
+
+.competition-image {
+  height: 180px;
+  object-fit: contain;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.competition-name {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 500;
+  margin: 8px 0;
+}
+h1{
+    color: blueviolet;
+    text-align: center;
+  font-size: 2rem;
+  font-weight: 480;
+  margin: 24px 0;
+  letter-spacing: 1px;
+}
