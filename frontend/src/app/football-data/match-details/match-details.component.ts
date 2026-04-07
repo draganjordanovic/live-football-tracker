@@ -113,4 +113,15 @@ export class MatchDetailsComponent {
 
     return ['IN_PLAY', 'PAUSED', 'FINISHED'].includes(this.data.status);
   }
+
+  downloadMatchPdf(): void {
+  const id = this.route.snapshot.paramMap.get('id');
+
+  if (!id) {
+    return;
+  }
+
+  const url = `http://127.0.0.1:3002/reports/matches/${id}/pdf`;
+  window.location.href = url;
+}
 }

@@ -12,8 +12,14 @@ use axum::{
 use crate::{
     app_state::AppState,
     errors::internal_error,
-    models::standings::CompetitionStandingResponse,
-    pdf::standings_report::build_standings_pdf,
+    models::{
+        match_details::MatchDetailsResponse,
+        standings::CompetitionStandingResponse,
+    },
+    pdf::{
+        match_report::build_match_pdf,
+        standings_report::build_standings_pdf,
+    },
 };
 
 pub async fn download_competition_standings_pdf(
@@ -54,6 +60,56 @@ pub async fn download_competition_standings_pdf(
         .map_err(|e| internal_error(format!("Failed to build PDF: {}", e)))?;
 
     let filename = format!("{}_standings_report.pdf", standings.competition.code.to_lowercase());
+
+    let mut response = Response::new(Body::from(pdf_bytes));
+    response.headers_mut().insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("application/pdf"),
+    );
+    response.headers_mut().insert(
+        CONTENT_DISPOSITION,
+        HeaderValue::from_str(&format!("attachment; filename=\"{}\"", filename))
+            .map_err(internal_error)?,
+    );
+
+    Ok(response)
+}
+
+pub async fn download_match_pdf(
+    Path(id): Path<u32>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Response<Body>, (StatusCode, String)> {
+    let url = format!("{}/matches/{}", state.football_data_service_url, id);
+
+    let response = state
+        .http_client
+        .get(&url)
+        .send()
+        .await
+        .map_err(internal_error)?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let body = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Failed to read error body".to_string());
+
+        return Err((
+            StatusCode::BAD_GATEWAY,
+            format!("Football Data Service error: {} - {}", status, body),
+        ));
+    }
+
+    let match_details: MatchDetailsResponse = response
+        .json()
+        .await
+        .map_err(internal_error)?;
+
+    let pdf_bytes = build_match_pdf(&match_details)
+        .map_err(|e| internal_error(format!("Failed to build PDF: {}", e)))?;
+
+    let filename = format!("match_{}_report.pdf", match_details.id);
 
     let mut response = Response::new(Body::from(pdf_bytes));
     response.headers_mut().insert(

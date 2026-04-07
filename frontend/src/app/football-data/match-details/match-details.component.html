@@ -9,6 +9,13 @@
 @if (data && !loading && !error) {
   <div class="match-details-page">
 
+    
+    <div class="actions-row">
+  <button mat-raised-button color="primary" (click)="downloadMatchPdf()">
+    Generate PDF
+  </button>
+</div>
+
     <mat-card class="hero-card">
       <mat-card-content>
         <div class="competition-row">
