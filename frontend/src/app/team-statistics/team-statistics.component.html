@@ -1,0 +1,175 @@
+@if (loading) {
+  <div class="state-box">
+    <p>Loading team statistics...</p>
+  </div>
+}
+
+@if (error) {
+  <div class="state-box error">
+    <p>{{ error }}</p>
+  </div>
+}
+
+@if (data && !loading && !error) {
+  <div class="team-statistics-page">
+
+    <mat-card class="hero-card">
+      <mat-card-content>
+        <div class="hero-top">
+          <div class="team-identity">
+            <img [src]="data.team_crest" [alt]="data.team_name" class="team-logo" />
+
+            <div class="team-meta">
+              <h1>{{ data.team_name }}</h1>
+              <div class="competition-line">
+                <span>{{ data.competition_name }}</span>
+                <span class="dot">•</span>
+                <span>{{ data.standing_type }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="position-badge">
+            <span class="position-label">Position</span>
+            <span class="position-value">#{{ data.position }}</span>
+          </div>
+        </div>
+
+        <div class="hero-summary">
+          <div class="summary-chip">
+            <span class="chip-label">Matchday</span>
+            <strong>{{ data.current_matchday ?? 'N/A' }}</strong>
+          </div>
+
+          <div class="summary-chip">
+            <span class="chip-label">Points</span>
+            <strong>{{ data.points }}</strong>
+          </div>
+
+          <div class="summary-chip">
+            <span class="chip-label">Played</span>
+            <strong>{{ data.played_games }}</strong>
+          </div>
+
+          <div class="summary-chip">
+            <span class="chip-label">Goal Diff</span>
+            <strong>{{ data.goal_difference }}</strong>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="quick-stats-grid">
+      <mat-card class="mini-stat-card accent-card">
+        <mat-card-content>
+          <div class="mini-stat-label">Avg points / match</div>
+          <div class="mini-stat-value">{{ number(data.average_points_per_match) }}</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="mini-stat-card">
+        <mat-card-content>
+          <div class="mini-stat-label">Avg goals scored</div>
+          <div class="mini-stat-value">{{ number(data.average_goals_for_per_match) }}</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="mini-stat-card">
+        <mat-card-content>
+          <div class="mini-stat-label">Avg goals conceded</div>
+          <div class="mini-stat-value">{{ number(data.average_goals_against_per_match) }}</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="mini-stat-card">
+        <mat-card-content>
+          <div class="mini-stat-label">Win rate</div>
+          <div class="mini-stat-value">{{ percentage(data.win_rate) }}</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="statistics-grid">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <h3>Performance</h3>
+
+          <div class="stat-row">
+            <span>Played</span>
+            <strong>{{ data.played_games }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Won</span>
+            <strong>{{ data.won }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Draw</span>
+            <strong>{{ data.draw }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Lost</span>
+            <strong>{{ data.lost }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Points</span>
+            <strong>{{ data.points }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Average points / match</span>
+            <strong>{{ number(data.average_points_per_match) }}</strong>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <h3>Goals</h3>
+
+          <div class="stat-row">
+            <span>Goals scored</span>
+            <strong>{{ data.goals_for }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Goals conceded</span>
+            <strong>{{ data.goals_against }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Goal difference</span>
+            <strong>{{ data.goal_difference }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Avg goals scored / match</span>
+            <strong>{{ number(data.average_goals_for_per_match) }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Avg goals conceded / match</span>
+            <strong>{{ number(data.average_goals_against_per_match) }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Avg goal diff / match</span>
+            <strong>{{ number(data.average_goal_difference_per_match) }}</strong>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <h3>Rates</h3>
+
+          <div class="stat-row">
+            <span>Win rate</span>
+            <strong>{{ percentage(data.win_rate) }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Draw rate</span>
+            <strong>{{ percentage(data.draw_rate) }}</strong>
+          </div>
+          <div class="stat-row">
+            <span>Loss rate</span>
+            <strong>{{ percentage(data.loss_rate) }}</strong>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+}
