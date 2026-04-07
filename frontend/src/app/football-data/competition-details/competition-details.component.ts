@@ -102,4 +102,13 @@ export class CompetitionDetailsComponent {
   openMatchDetails(matchId: number): void {
   this.router.navigate(['/matches', matchId]);
 }
+openTeamStatistics(teamId: number): void {
+  const code = this.route.snapshot.paramMap.get('code');
+
+  if (!code) {
+    return;
+  }
+
+  this.router.navigate(['/competitions', code, 'teams', teamId, 'statistics']);
+}
 }
