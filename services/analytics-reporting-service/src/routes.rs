@@ -8,6 +8,7 @@ use crate::{
     handlers::reports::{
         download_competition_standings_pdf,
         download_match_pdf,
+        download_team_statistics_pdf,
     },
 };
 
@@ -20,6 +21,10 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route(
             "/reports/matches/:id/pdf",
             get(download_match_pdf),
+        )
+        .route(
+            "/reports/competitions/:code/teams/:teamId/statistics/pdf",
+            get(download_team_statistics_pdf),
         )
         .with_state(state)
         .layer(CorsLayer::permissive())
