@@ -224,3 +224,9 @@
     font-size: 1.6rem;
   }
 }
+
+.actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}

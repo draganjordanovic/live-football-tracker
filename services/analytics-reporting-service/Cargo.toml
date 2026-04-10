@@ -1,0 +1,19 @@
+[package]
+name = "analytics-reporting-service"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.6", features = ["cors"] }
+
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+chrono = { version = "0.4", features = ["serde"] }
+dotenvy = "0.15"
+
+genpdf = "0.2"

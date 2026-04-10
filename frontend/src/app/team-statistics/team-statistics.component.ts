@@ -63,4 +63,16 @@ export class TeamStatisticsComponent {
 
   return this.data.form.split(',').map(item => item.trim());
 }
+
+downloadPdf(): void {
+  const code = this.route.snapshot.paramMap.get('code');
+  const teamId = this.route.snapshot.paramMap.get('teamId');
+
+  if (!code || !teamId) {
+    return;
+  }
+
+  const url = `http://127.0.0.1:3002/reports/competitions/${code}/teams/${teamId}/statistics/pdf`;
+  window.location.href = url;
+}
 }

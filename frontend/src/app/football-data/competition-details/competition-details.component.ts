@@ -111,4 +111,15 @@ openTeamStatistics(teamId: number): void {
 
   this.router.navigate(['/competitions', code, 'teams', teamId, 'statistics']);
 }
+
+downloadStandingsPdf(): void {
+  const code = this.route.snapshot.paramMap.get('code');
+
+  if (!code) {
+    return;
+  }
+
+  const url = `http://127.0.0.1:3002/reports/competitions/${code}/standings/pdf`;
+  window.location.href = url;
+}
 }
