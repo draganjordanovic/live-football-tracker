@@ -9,3 +9,11 @@ pub struct User {
     pub role: String,
     pub created_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Serialize)]
+pub struct MeResponse {
+    pub id: Uuid,
+    pub email: String,
+    pub role: String,
+    pub created_at: DateTime<Utc>,
+}

@@ -3,6 +3,7 @@ mod routes;
 mod handlers;
 mod models;
 mod auth;
+mod extractors;
 
 use std::{env, sync::Arc};
 
