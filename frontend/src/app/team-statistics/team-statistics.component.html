@@ -13,6 +13,12 @@
 @if (data && !loading && !error) {
   <div class="team-statistics-page">
 
+    <div class="actions-row">
+  <button mat-raised-button color="primary" (click)="downloadPdf()">
+    Generate PDF
+  </button>
+</div>
+
     <mat-card class="hero-card">
       <mat-card-content>
         <div class="hero-top">

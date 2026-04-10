@@ -1,0 +1,213 @@
+use chrono::{DateTime, Local, Utc};
+use genpdf::{
+    elements::{Break, Paragraph},
+    style::{Color, Style},
+    Alignment, Document, Element as _,
+};
+
+use crate::models::match_details::{MatchDetailsResponse};
+
+pub fn build_match_pdf(
+    data: &MatchDetailsResponse,
+) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let font_family = genpdf::fonts::from_files("./fonts", "LiberationSans", None)?;
+    let mut doc = Document::new(font_family);
+
+    doc.set_title(format!("Match Report - {} vs {}", data.home_team.name, data.away_team.name));
+    doc.set_minimal_conformance();
+    doc.set_line_spacing(1.2);
+
+    let mut decorator = genpdf::SimplePageDecorator::new();
+    decorator.set_margins(genpdf::Margins::trbl(14, 12, 14, 12));
+    let competition_name = data.competition.name.clone();
+    decorator.set_header(move |page| {
+        Paragraph::new(format!("{} — Match Report — Page {}", competition_name, page))
+            .aligned(Alignment::Center)
+            .styled(
+                Style::new()
+                    .bold()
+                    .with_font_size(10)
+                    .with_color(Color::Rgb(90, 90, 90)),
+            )
+    });
+    doc.set_page_decorator(decorator);
+
+    let title_style = Style::new().bold().with_font_size(22);
+    let subtitle_style = Style::new()
+        .with_font_size(12)
+        .with_color(Color::Rgb(90, 90, 90));
+    let section_style = Style::new().bold().with_font_size(14);
+    // let label_style = Style::new().bold().with_font_size(11);
+    let normal_style = Style::new().with_font_size(11);
+    let muted_style = Style::new()
+        .italic()
+        .with_font_size(10)
+        .with_color(Color::Rgb(110, 110, 110));
+
+    // HERO
+    doc.push(
+        Paragraph::new(data.competition.name.clone())
+            .aligned(Alignment::Center)
+            .styled(title_style),
+    );
+
+    doc.push(
+        Paragraph::new(format!(
+            "{}  vs  {}",
+            data.home_team.name, data.away_team.name
+        ))
+        .aligned(Alignment::Center)
+        .styled(Style::new().bold().with_font_size(18)),
+    );
+
+    doc.push(
+        Paragraph::new(format!(
+            "{} : {}",
+            score_value(data.score.full_time.home),
+            score_value(data.score.full_time.away)
+        ))
+        .aligned(Alignment::Center)
+        .styled(
+            Style::new()
+                .bold()
+                .with_font_size(24)
+                .with_color(Color::Rgb(0, 76, 153)),
+        ),
+    );
+
+    doc.push(
+        Paragraph::new(format!(
+            "Status: {}   •   Matchday: {}   •   Stage: {}",
+            format_status(&data.status),
+            data.matchday
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "N/A".to_string()),
+            data.stage.clone().unwrap_or_else(|| "N/A".to_string())
+        ))
+        .aligned(Alignment::Center)
+        .styled(subtitle_style),
+    );
+
+    doc.push(Break::new(1));
+
+    // MATCH INFO
+    doc.push(Paragraph::new("Match Information").styled(section_style));
+
+    doc.push(
+        Paragraph::new(format!(
+            "Date & Time: {}",
+            format_datetime(&data.utc_date)
+        ))
+        .styled(normal_style),
+    );
+
+    doc.push(
+        Paragraph::new(format!(
+            "Venue: {}",
+            data.venue.clone().unwrap_or_else(|| "Not available".to_string())
+        ))
+        .styled(normal_style),
+    );
+
+    doc.push(
+        Paragraph::new(format!(
+            "Half-time score: {} : {}",
+            score_value(data.score.half_time.home),
+            score_value(data.score.half_time.away)
+        ))
+        .styled(normal_style),
+    );
+
+    doc.push(
+        Paragraph::new(format!(
+            "Winner: {}",
+            winner_label(data)
+        ))
+        .styled(normal_style),
+    );
+
+    doc.push(Break::new(1));
+
+    // REFEREES
+    doc.push(Paragraph::new("Referees").styled(section_style));
+
+    if data.referees.is_empty() {
+        doc.push(Paragraph::new("No referee information available.").styled(normal_style));
+    } else {
+        for referee in &data.referees {
+            doc.push(
+                Paragraph::new(format!(
+                    "{}{}{}",
+                    referee.name,
+                    referee
+                        .r#type
+                        .as_ref()
+                        .map(|t| format!(" • {}", t))
+                        .unwrap_or_default(),
+                    referee
+                        .nationality
+                        .as_ref()
+                        .map(|n| format!(" • {}", n))
+                        .unwrap_or_default()
+                ))
+                .styled(normal_style),
+            );
+        }
+    }
+
+    doc.push(Break::new(1));
+
+    doc.push(Break::new(2));
+
+    let generated_at = Local::now().format("%d.%m.%Y %H:%M").to_string();
+    doc.push(
+        Paragraph::new("Generated by Analytics & Reporting Service")
+            .aligned(Alignment::Center)
+            .styled(muted_style),
+    );
+    doc.push(
+        Paragraph::new(format!("Generated at: {}", generated_at))
+            .aligned(Alignment::Right)
+            .styled(muted_style),
+    );
+
+    let mut bytes = Vec::new();
+    doc.render(&mut bytes)?;
+    Ok(bytes)
+}
+
+fn score_value(value: Option<i32>) -> String {
+    value.map(|v| v.to_string()).unwrap_or_else(|| "-".to_string())
+}
+
+fn format_status(status: &str) -> String {
+    match status {
+        "TIMED" => "Scheduled".to_string(),
+        "IN_PLAY" => "Live".to_string(),
+        "PAUSED" => "Paused".to_string(),
+        "FINISHED" => "Finished".to_string(),
+        "POSTPONED" => "Postponed".to_string(),
+        "SUSPENDED" => "Suspended".to_string(),
+        "CANCELLED" => "Cancelled".to_string(),
+        _ => status.to_string(),
+    }
+}
+
+fn winner_label(data: &MatchDetailsResponse) -> String {
+    match data.score.winner.as_deref() {
+        Some("HOME_TEAM") => data.home_team.name.clone(),
+        Some("AWAY_TEAM") => data.away_team.name.clone(),
+        _ => "Draw / not decided".to_string(),
+    }
+}
+
+fn format_datetime(value: &str) -> String {
+    match DateTime::parse_from_rfc3339(value) {
+        Ok(dt) => dt
+            .with_timezone(&Utc)
+            .with_timezone(&Local)
+            .format("%d.%m.%Y %H:%M")
+            .to_string(),
+        Err(_) => value.to_string(),
+    }
+}

@@ -14,6 +14,11 @@
       <!-- <p>Current matchday: {{ data.season.current_matchday ?? 'N/A' }}</p> -->
     </div>
   </div>
+  <div class="actions-row">
+  <button mat-raised-button color="primary" (click)="downloadStandingsPdf()">
+    Generate PDF
+  </button>
+</div>
 
   @if (standingTypes.length > 1) {
     <div class="standing-switcher">
