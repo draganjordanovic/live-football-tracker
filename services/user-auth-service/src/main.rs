@@ -1,5 +1,7 @@
 mod app_state;
 mod routes;
+mod handlers;
+mod models;
 
 use std::{env, sync::Arc};
 
