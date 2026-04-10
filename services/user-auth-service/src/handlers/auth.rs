@@ -14,6 +14,10 @@ use crate::{
     models::{auth::RegisterRequest, user::User},
 };
 
+use bcrypt::verify;
+use crate::models::auth::{LoginRequest, AuthResponse};
+use crate::auth::generate_jwt;
+
 pub async fn register(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<RegisterRequest>,
@@ -54,4 +58,43 @@ pub async fn register(
             Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
         }
     }
+}
+
+pub async fn login(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<LoginRequest>,
+) -> Result<Json<AuthResponse>, (StatusCode, String)> {
+    let user = sqlx::query!(
+        r#"
+        SELECT id, email, password_hash, role
+        FROM users
+        WHERE email = $1
+        "#,
+        payload.email
+    )
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let user = match user {
+        Some(u) => u,
+        None => return Err((StatusCode::UNAUTHORIZED, "Invalid credentials".into())),
+    };
+
+    let is_valid = verify(&payload.password, &user.password_hash)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if !is_valid {
+        return Err((StatusCode::UNAUTHORIZED, "Invalid credentials".into()));
+    }
+
+    let token = generate_jwt(
+        user.id,
+        user.email,
+        user.role,
+        &state.jwt_secret,
+    )
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(AuthResponse { token }))
 }

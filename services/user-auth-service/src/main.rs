@@ -2,6 +2,7 @@ mod app_state;
 mod routes;
 mod handlers;
 mod models;
+mod auth;
 
 use std::{env, sync::Arc};
 
