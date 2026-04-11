@@ -230,3 +230,14 @@
   justify-content: flex-end;
   margin-bottom: 20px;
 }
+
+.favorite-button {
+  margin-left: auto;
+}
+
+.favorite-button mat-icon {
+  color: #f4b400;
+  font-size: 30px;
+  width: 30px;
+  height: 30px;
+}
