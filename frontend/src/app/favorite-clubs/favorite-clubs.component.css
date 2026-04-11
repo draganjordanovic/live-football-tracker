@@ -1,0 +1,76 @@
+.favorite-clubs-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  margin: 0 0 8px;
+}
+
+.page-header p {
+  margin: 0;
+  opacity: 0.75;
+}
+
+.error {
+  color: #c62828;
+}
+
+.empty-card,
+.favorite-card {
+  border-radius: 18px;
+}
+
+.favorites-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.favorite-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.favorite-card:hover {
+  transform: translateY(-2px);
+}
+
+.club-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.club-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.club-crest {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+@media (max-width: 800px) {
+  .favorites-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .favorite-clubs-page {
+    padding: 16px;
+  }
+
+  .club-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

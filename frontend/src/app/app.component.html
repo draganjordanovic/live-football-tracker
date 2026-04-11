@@ -1,6 +1,8 @@
 <mat-toolbar color="primary" class="app-toolbar">
   <div class="toolbar-left">
+    @if (authService.isLoggedIn()) {
     <span class="app-title" routerLink="/competitions">Live Football Tracker</span>
+    }
   </div>
 
   <div class="toolbar-right">
@@ -8,6 +10,7 @@
       <button mat-button routerLink="/login">Login</button>
       <button mat-button routerLink="/register">Register</button>
     } @else {
+      <button mat-button routerLink="/favorites">My Favorite Clubs</button>
       <button mat-button (click)="logout()">Logout</button>
     }
   </div>
