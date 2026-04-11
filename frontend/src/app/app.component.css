@@ -1,14 +1,22 @@
-.spacer {
-  flex: 1 1 auto;
+.app-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
 }
 
-.page-container {
-  padding: 24px;
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-mat-toolbar{
-    color: white;
-    background-color: blueviolet;
+
+.app-title {
+  font-weight: 700;
+  cursor: pointer;
 }
-.button {
-  color: white !important;
+
+.app-content {
+  min-height: calc(100vh - 64px);
 }

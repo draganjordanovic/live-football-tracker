@@ -1,0 +1,26 @@
+.auth-page {
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  border-radius: 20px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.error {
+  color: #c62828;
+  margin: 0;
+}
+
+.auth-link {
+  margin: 0;
+}

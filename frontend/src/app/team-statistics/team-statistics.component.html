@@ -35,6 +35,16 @@
             </div>
           </div>
 
+          <button
+  mat-icon-button
+  class="favorite-button"
+  (click)="toggleFavorite()"
+  [disabled]="!authService.isLoggedIn()"
+  [attr.aria-label]="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+>
+  <mat-icon>{{ isFavorite ? 'star' : 'star_border' }}</mat-icon>
+</button>
+
           <div class="position-badge">
             <span class="position-label">Position</span>
             <span class="position-value">#{{ data.position }}</span>

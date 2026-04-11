@@ -4,17 +4,26 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { TeamStatisticsService } from '../services/team-statistics.service';
 import { TeamStatisticsResponse } from '../model/team-statistics';
+import { AuthService } from '../services/auth.service';
+import { FavoriteClubsService } from '../services/favorite-clubs.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-team-statistics',
   standalone: true,
-  imports: [CommonModule, MatCardModule],
+  imports: [CommonModule, MatCardModule, MatIconModule, MatButtonModule],
   templateUrl: './team-statistics.component.html',
   styleUrl: './team-statistics.component.css'
 })
 export class TeamStatisticsComponent {
   private route = inject(ActivatedRoute);
   private teamStatisticsService = inject(TeamStatisticsService);
+
+  favoriteClubsService = inject(FavoriteClubsService);
+  authService = inject(AuthService);
+
+  isFavorite = false;
 
   data: TeamStatisticsResponse | null = null;
   loading = false;
@@ -30,6 +39,10 @@ export class TeamStatisticsComponent {
     }
 
     this.loadStatistics(code, Number(teamId));
+
+    if (this.authService.isLoggedIn()) {
+      this.loadFavoriteState();
+}
   }
 
   loadStatistics(code: string, teamId: number): void {
@@ -47,6 +60,50 @@ export class TeamStatisticsComponent {
       }
     });
   }
+
+  loadFavoriteState(): void {
+  const teamId = this.route.snapshot.paramMap.get('teamId');
+
+  if (!teamId || !this.authService.isLoggedIn()) {
+    return;
+  }
+
+  this.favoriteClubsService.getMyFavoriteClubs().subscribe({
+    next: (favorites) => {
+      this.isFavorite = favorites.some(f => f.club_external_id === Number(teamId));
+    },
+    error: () => {
+      this.isFavorite = false;
+    }
+  });
+}
+
+toggleFavorite(): void {
+  if (!this.data || !this.authService.isLoggedIn()) {
+    return;
+  }
+
+  if (this.isFavorite) {
+    this.favoriteClubsService.removeFavoriteClub(this.data.team_id).subscribe({
+      next: () => {
+        this.isFavorite = false;
+      }
+    });
+  } else {
+    this.favoriteClubsService.addFavoriteClub({
+      club_external_id: this.data.team_id,
+      competition_code: this.data.competition_code,
+      club_name: this.data.team_name,
+      club_short_name: this.data.team_short_name,
+      club_crest: this.data.team_crest
+    }).subscribe({
+      next: () => {
+        this.isFavorite = true;
+      }
+    });
+  }
+}
+
 
   percentage(value: number): string {
     return `${(value * 100).toFixed(1)}%`;

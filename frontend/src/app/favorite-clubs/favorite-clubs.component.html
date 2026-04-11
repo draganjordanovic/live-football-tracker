@@ -1,0 +1,58 @@
+<div class="favorite-clubs-page">
+  <div class="page-header">
+    <h1>My Favorite Clubs</h1>
+    <p>Your saved clubs for quick access.</p>
+  </div>
+
+  @if (loading) {
+    <p>Loading favorite clubs...</p>
+  }
+
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+
+  @if (!loading && !error && favorites.length === 0) {
+    <mat-card class="empty-card">
+      <mat-card-content>
+        <h3>No favorite clubs yet</h3>
+        <p>Go to a club statistics page and click the star icon to add it to favorites.</p>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (!loading && favorites.length > 0) {
+    <div class="favorites-grid">
+      @for (club of favorites; track club.id) {
+        <mat-card class="favorite-card" (click)="openClubStatistics(club)">
+          <mat-card-content>
+            <div class="club-header">
+              <div class="club-info">
+                @if (club.club_crest) {
+                  <img
+                    [src]="club.club_crest"
+                    [alt]="club.club_name"
+                    class="club-crest"
+                  />
+                }
+
+                <div>
+                  <h3>{{ club.club_name }}</h3>
+                  <p>{{ club.competition_code }}</p>
+                </div>
+              </div>
+
+              <button
+                mat-button
+                color="warn"
+                (click)="removeFavorite(club, $event)"
+              >
+                Remove
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+</div>
